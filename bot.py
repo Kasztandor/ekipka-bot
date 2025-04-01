@@ -60,6 +60,12 @@ async def on_ready():
     #await bot.tree.sync(guild=discord.Object(id=os.getenv("GUILD_ID")))
     #print("Bot synced")
 
+async def botLog(name, uid, value):
+    channel = bot.get_channel(int(os.getenv("LOGS")))
+    if channel is not None:
+        message = f"<@{uid}> używa **{name}** z parametrami: {value}"
+        await channel.send(message)
+
 @bot.tree.command(name="urodziny", description="Dodaj swoją datę urodzin w formacie dd-mm-yyyy")
 async def urodziny(interaction: discord.Interaction, data_urodzenia: str):
     try:
@@ -69,6 +75,7 @@ async def urodziny(interaction: discord.Interaction, data_urodzenia: str):
     except ValueError:
         await interaction.response.send_message("Podana data jest niepoprawna.", ephemeral=True)
         return
+    await botLog("urodziny", interaction.user.id, "data_urodzenia="+data_urodzenia.strftime("%d-%m-%Y"))
 
 @bot.tree.command(name="ping", description="Pong!")
 async def ping(interaction: discord.Interaction):
