@@ -4,6 +4,7 @@ import discord
 import dotenv
 from discord.ext import commands, tasks
 from datetime import datetime, timedelta
+from typing import Literal, Optional
 
 dotenv.load_dotenv(".env")
 
@@ -56,8 +57,8 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def on_ready():
     print(f"Logged in as {bot.user}")
     print(f"GUILD_ID: {os.getenv('GUILD_ID')}")
-    await bot.tree.sync(guild=discord.Object(id=os.getenv("GUILD_ID")))
-    print("Bot synced")
+    #await bot.tree.sync(guild=discord.Object(id=os.getenv("GUILD_ID")))
+    #print("Bot synced")
 
 @bot.tree.command(name="urodziny", description="Dodaj swoją datę urodzin w formacie dd-mm-yyyy")
 async def urodziny(interaction: discord.Interaction, data_urodzenia: str):
@@ -69,9 +70,50 @@ async def urodziny(interaction: discord.Interaction, data_urodzenia: str):
         await interaction.response.send_message("Podana data jest niepoprawna.", ephemeral=True)
         return
 
+@bot.tree.command(name="ping", description="Pong!")
+async def ping(interaction: discord.Interaction):
+    await interaction.response.send_message("Pong! "+str(bot.latency)+"ms", ephemeral=True)
+
+# Umbra's Sync Command
+
+@bot.command()
+@commands.guild_only()
+@commands.is_owner()
+async def sync(ctx: commands.Context, guilds: commands.Greedy[discord.Object], spec: Optional[Literal["~", "*", "^"]] = None) -> None:
+    print("Syncing...")
+    if not guilds:
+        if spec == "~":
+            synced = await ctx.bot.tree.sync(guild=ctx.guild)
+        elif spec == "*":
+            ctx.bot.tree.copy_global_to(guild=ctx.guild)
+            synced = await ctx.bot.tree.sync(guild=ctx.guild)
+        elif spec == "^":
+            ctx.bot.tree.clear_commands(guild=ctx.guild)
+            await ctx.bot.tree.sync(guild=ctx.guild)
+            synced = []
+        else:
+            synced = await ctx.bot.tree.sync()
+
+        await ctx.send(
+            f"Synced {len(synced)} commands {'globally' if spec is None else 'to the current guild.'}"
+        )
+        return
+
+    ret = 0
+    for guild in guilds:
+        try:
+            await ctx.bot.tree.sync(guild=guild)
+        except discord.HTTPException:
+            pass
+        else:
+            ret += 1
+
+    await ctx.send(f"Synced the tree to {ret}/{len(guilds)}.")
+
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
         return
+    await bot.process_commands(message)
 
 bot.run(os.getenv("TOKEN"))
