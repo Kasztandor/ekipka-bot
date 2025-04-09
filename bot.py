@@ -120,9 +120,10 @@ async def sync(ctx: commands.Context, guilds: commands.Greedy[discord.Object], s
 @bot.event
 async def on_message(message):
     msg = message.content
+    print(msg)
     if message.author == bot.user:
         return
-    if message.channel.id == os.getenv("MEMES_CHANNEL"):
+    if str(message.channel.id) == os.getenv("MEMES_CHANNEL"):
         if len(message.attachments) or message.content.startswith("j:") or "https://" in msg or "http://" in msg:
             await message.add_reaction("\U0001F923")
     await bot.process_commands(message)
