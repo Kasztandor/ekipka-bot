@@ -126,6 +126,9 @@ async def on_message(message):
     if str(message.channel.id) == os.getenv("MEMES_CHANNEL"):
         if len(message.attachments) or message.content.startswith("j:") or "https://" in msg or "http://" in msg:
             await message.add_reaction("\U0001F923")
+    if str(message.channel.id) == os.getenv("VOTE"):
+        await message.add_reaction("\U00002714")
+        await message.add_reaction("\U0001F6AB")
     await bot.process_commands(message)
 
 bot.run(os.getenv("TOKEN"))
